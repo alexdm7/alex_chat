@@ -6,15 +6,15 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:flutter/material.dart';
 
-class ChatMasseges extends StatefulWidget{
- const ChatMasseges({super.key});
+class ChatMessages extends StatefulWidget{
+ const ChatMessages({super.key});
 
   @override
-  State<ChatMasseges> createState() => _ChatMassegesState();
+  State<ChatMessages> createState() => _ChatMessagesState();
 }
 
-class _ChatMassegesState extends State<ChatMasseges> {
-  void stupPuchNotivgation ()async{
+class _ChatMessagesState extends State<ChatMessages> {
+  void setupPushNotification ()async{
 
     final fcm =FirebaseMessaging.instance;
     await fcm.requestPermission();
@@ -28,7 +28,7 @@ class _ChatMassegesState extends State<ChatMasseges> {
   }
   @override
   Widget build(BuildContext context) {
-    final authctionUser= FirebaseAuth.instance.currentUser!;
+    final authenticationUser= FirebaseAuth.instance.currentUser!;
     return StreamBuilder(
         stream: FirebaseFirestore
             .instance.collection('chat')
@@ -39,15 +39,15 @@ class _ChatMassegesState extends State<ChatMasseges> {
             .snapshots(),
         builder: (cxt, chatSnapshots) {
       if(chatSnapshots.connectionState == ConnectionState.waiting){
-        return Center(child:CircularProgressIndicator(),);
+        return const Center(child: CircularProgressIndicator(),);
       }
       if(!chatSnapshots.hasData || chatSnapshots.data!.docs.isEmpty){
-         return Center(child: Text('no masseges'),);
+         return const Center(child: Text('no Messages'),);
       }
       if(chatSnapshots.hasError){
-        return Center(child: Text('ohhhhhhhhhh'),);
+        return const Center(child: Text('ohhhhhhhhhh'),);
       }
-      final loadedmasseges=chatSnapshots.data!.docs;
+      final loadedMessages=chatSnapshots.data!.docs;
       return ListView.builder(
         padding: const EdgeInsets.only(
 
@@ -59,25 +59,25 @@ class _ChatMassegesState extends State<ChatMasseges> {
         ),
           reverse: true,
 
-          itemCount: loadedmasseges.length,
+          itemCount: loadedMessages.length,
           itemBuilder: (ctx, index) {
-          final chatMassege=loadedmasseges[index].data();
-          final nextChatMassege=index+1 < loadedmasseges.length
-          ? loadedmasseges[index+1].data()
+          final chatMessages=loadedMessages[index].data();
+          final nextChatMessages=index+1 < loadedMessages.length
+          ? loadedMessages[index+1].data()
               :null;
-          final crrentMassegeUserId=chatMassege['userId'];
-          final nextMassegeUserId=
-              nextChatMassege != null ? nextChatMassege['userId']:null;
-          final nextUserSame=nextMassegeUserId == crrentMassegeUserId;
+          final currentMessagesUserId=chatMessages['userId'];
+          final nextMessagesUserId=
+              nextChatMessages != null ? nextChatMessages['userId']:null;
+          final nextUserSame=nextMessagesUserId == currentMessagesUserId;
           if(nextUserSame){
-            return MessageBubble.next(message: chatMassege['text'],
-                isMe: authctionUser.uid==crrentMassegeUserId);
+            return MessageBubble.next(message: chatMessages['text'],
+                isMe: authenticationUser.uid==currentMessagesUserId);
           }else{
             return MessageBubble.first(
-                userImage: chatMassege['userImage'],
-                username: chatMassege['username'],
-                message: chatMassege['text'],
-                isMe: authctionUser.uid==crrentMassegeUserId);
+                userImage: chatMessages['userImage'],
+                username: chatMessages['username'],
+                message: chatMessages['text'],
+                isMe: authenticationUser.uid==currentMessagesUserId);
           }
           }
 

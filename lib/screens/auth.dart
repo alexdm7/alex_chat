@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 
-
+//Firebase authentication instance
 final _fireBase=FirebaseAuth.instance;
 
 
@@ -20,15 +20,18 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final _form = GlobalKey<FormState>();
-  File? _selecteImage;
+  File? _selectedImage;
+  var userCredentials;
   var _isLogin = true;
-  var _enterdEmail = '';
+  var _enteredEmail = '';
   var _username='';
-    var _enterdPass = '';
-    var _isAuthintcate=false;
+    var _enteredPassword = '';
+    var _isAuthenticate=false;
+    //submission method for sign up and sign in
   void _submit()async {
-    final isVild = _form.currentState!.validate();
-    if(!isVild || ! _isLogin && _selecteImage==null){
+    final isValid = _form.currentState!.validate();
+
+    if(!isValid || ! _isLogin && _selectedImage==null){
       return;
     }
 
@@ -36,30 +39,32 @@ class _AuthScreenState extends State<AuthScreen> {
       _form.currentState!.save();
     try{
       setState(() {
-        _isAuthintcate=true;
+        _isAuthenticate=true;
       });
+      //check for sign up or sign in
        if(_isLogin){
-         final usercredntil=await _fireBase.signInWithEmailAndPassword(
-             email: _enterdEmail, password: _enterdPass);
+         //submission method for sign in
+          userCredentials=await _fireBase.signInWithEmailAndPassword(
+             email: _enteredEmail, password: _enteredPassword);
 
 
        }else{
-
-           final usercredntil=await _fireBase.
-           createUserWithEmailAndPassword(email: _enterdEmail, password: _enterdPass);
-           final storgeRef= FirebaseStorage.instance
+         //submission method for sign up
+            userCredentials=await _fireBase.
+           createUserWithEmailAndPassword(email: _enteredEmail, password: _enteredPassword);
+           final storageRef= FirebaseStorage.instance
                .ref().child('user_images')
-               .child('${usercredntil
+               .child('${userCredentials
                .user!.uid}.jpg');
-           await storgeRef.putFile(_selecteImage!);
-           final imageUrl=await storgeRef.getDownloadURL();
+           await storageRef.putFile(_selectedImage!);
+           final imageUrl=await storageRef.getDownloadURL();
            await FirebaseFirestore
                 .instance
                 .collection('users')
-                .doc(usercredntil
+                .doc(userCredentials
                 .user!.uid).set({
              'username': _username,
-             'email': _enterdEmail,
+             'email': _enteredEmail,
              'image_url': imageUrl
            });
 
@@ -75,7 +80,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
            );
            setState(() {
-             _isAuthintcate=false;
+             _isAuthenticate=false;
            });
 
 
@@ -102,10 +107,10 @@ class _AuthScreenState extends State<AuthScreen> {
                 child: Image.asset('assets/images/chat.png'),
               ),
               Card(
-                margin: EdgeInsets.all(20),
+                margin: const EdgeInsets.all(20),
                 child: SingleChildScrollView(
                     child: Padding(
-                      padding: EdgeInsets.all(16),
+                      padding:const EdgeInsets.all(16),
                       child: Form(
                         key: _form,
                         child: Column(
@@ -113,7 +118,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           children: [
                             if(!_isLogin)
                               UserImagePicker(onPickImage: (pickedImage) {
-                                _selecteImage=pickedImage;
+                                _selectedImage=pickedImage;
                               },),
                             TextFormField(
                               decoration:const InputDecoration(
@@ -131,7 +136,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                 return null;
                               },
                               onSaved: (value) {
-                                _enterdEmail = value!;
+                                _enteredEmail = value!;
                               },
                             ),
                             if(!_isLogin)
@@ -163,15 +168,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                 return null;
                               },
                               onSaved: (value) {
-                                _enterdPass = value!;
+                                _enteredPassword = value!;
                               },
                             ),
                             const SizedBox(
                               height: 12,
                             ),
-                            if(_isAuthintcate)
-                              CircularProgressIndicator(),
-                            if(!_isAuthintcate)
+                            if(_isAuthenticate)
+                              const CircularProgressIndicator(),
+                            if(!_isAuthenticate)
                             ElevatedButton(
                                 onPressed: _submit,
                                 style: ElevatedButton.styleFrom(
@@ -179,7 +184,7 @@ class _AuthScreenState extends State<AuthScreen> {
                                         .colorScheme
                                         .primaryContainer),
                                 child: Text(_isLogin ? 'login' : 'sign up')),
-                            if(!_isAuthintcate)
+                            if(!_isAuthenticate)
                             TextButton(
                                 onPressed: () {
                                   setState(() {
@@ -187,8 +192,8 @@ class _AuthScreenState extends State<AuthScreen> {
                                   });
                                 },
                                 child: Text(_isLogin
-                                    ? 'create Acount'
-                                    : 'i have aredy acount')),
+                                    ? 'create Account'
+                                    : 'I already have an account')),
                           ],
                         ),
                       ),
